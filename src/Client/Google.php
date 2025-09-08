@@ -9,8 +9,6 @@ use Yiisoft\Yii\AuthClient\OAuthToken;
 use Yiisoft\Yii\AuthClient\RequestUtil;
 
 /**
- * Date: 31/12/2024
- *
  * Google allows authentication via Google OAuth2 using HTTP client. Here we are NOT using the alternative Client Libraries
  * namely @see https://developers.google.com/people/v1/libraries#php
  * In order to use Google OAuth2 you must create a project at <https://console.cloud.google.com/cloud-resource-manager>
@@ -20,7 +18,7 @@ use Yiisoft\Yii\AuthClient\RequestUtil;
  * @see https://developers.google.com/oauthplayground
  * @see <https://console.cloud.google.com/welcome?project=[yourProjectId]>
  */
-class Google extends OAuth2 implements GoogleInterface
+class Google extends OAuth2
 {
     protected string $authUrl = 'https://accounts.google.com/o/oauth2/v2/auth';
     protected string $tokenUrl = 'https://oauth2.googleapis.com/token';
@@ -79,21 +77,11 @@ class Google extends OAuth2 implements GoogleInterface
         return [];
     }
 
-    /**
-     * @return string service name.
-     *
-     * @psalm-return 'google'
-     */
     public function getName(): string
     {
         return 'google';
     }
 
-    /**
-     * @return string service title.
-     *
-     * @psalm-return 'Google'
-     */
     public function getTitle(): string
     {
         return 'Google';
@@ -111,20 +99,6 @@ class Google extends OAuth2 implements GoogleInterface
     }
 
     /**
-     * Previously:
-     * @see https://www.googleapis.com/auth/people/me
-     * ...which returns:
-     *
-     * ..."You are receiving this error either because
-     * your input OAuth2 scope name is invalid or
-     * it refers to a newer scope that is outside the domain of this legacy API.
-     * This API was built at a time when the scope name format was not yet standardized.
-     * This is no longer the case and all valid scope names (both old and new) are catalogued at
-     * https://developers.google.com/identity/protocols/oauth2/scopes."
-     *
-     * Use that webpage to lookup (manually) the scope name associated with the API you are trying to call
-     * and use it to craft your OAuth2 request.
-     *
      * @see https://developers.google.com/identity/protocols/oauth2/scopes#oauth2
      *
      * ...which returns two scopes

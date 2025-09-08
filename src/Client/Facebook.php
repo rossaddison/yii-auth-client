@@ -19,28 +19,23 @@ use Yiisoft\Yii\AuthClient\RequestUtil;
  * Example application configuration:
  *
  * config/common/params.php
- * ['yiisoft/yii-auth-client']['clients']
  *
- * ```php
- * 'components' => [
- *     'authClientCollection' => [
- *         'class' => Yiisoft\Yii\AuthClient\Collection::class,
- *         'clients' => [
- *             'facebook' => [
- *                 'class' => Yiisoft\Yii\AuthClient\Clients\Facebook::class,
- *                 'clientId' => 'facebook_client_id',
- *                 'clientSecret' => 'facebook_client_secret',
- *             ],
- *         ],
- *     ]
- *     // ...
- * ]
- * ```
+ * 'yiisoft/yii-auth-client' => [
+ *       'enabled' => true,
+ *       'clients' => [
+ *           'facebook' => [
+ *               'class' => 'Yiisoft\Yii\AuthClient\Client\Facebook::class',
+ *               'clientId' => $_ENV['FACEBOOK_API_CLIENT_ID'] ?? '',
+ *               'clientSecret' => $_ENV['FACEBOOK_API_CLIENT_SECRET'] ?? '',
+ *               'returnUrl' => $_ENV['FACEBOOK_API_CLIENT_RETURN_URL'] ?? '',
+ *           ],
+ *       ],
+ *   ],
  *
  * @link https://developers.facebook.com/apps
  * @link https://developers.facebook.com/docs/reference/api
  */
-final class Facebook extends OAuth2 implements FacebookInterface
+final class Facebook extends OAuth2
 {
     protected string $authUrl = 'https://www.facebook.com/dialog/oauth';
     protected string $tokenUrl = 'https://graph.facebook.com/oauth/access_token';
@@ -233,21 +228,11 @@ final class Facebook extends OAuth2 implements FacebookInterface
         return $token;
     }
 
-    /**
-     * @return string service name.
-     *
-     * @psalm-return 'facebook'
-     */
     public function getName(): string
     {
         return 'facebook';
     }
 
-    /**
-     * @return string service title.
-     *
-     * @psalm-return 'Facebook'
-     */
     public function getTitle(): string
     {
         return 'Facebook';

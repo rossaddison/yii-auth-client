@@ -34,7 +34,7 @@ use Yiisoft\Yii\AuthClient\RequestUtil;
  * @link https://developer.github.com/v3/oauth/
  * @link https://github.com/settings/applications/new
  */
-final class GitHub extends OAuth2 implements GitHubInterface
+final class GitHub extends OAuth2
 {
     /**
      * @see https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps#1-request-a-users-github-identity
@@ -60,7 +60,6 @@ final class GitHub extends OAuth2 implements GitHubInterface
                 $request,
                 [
                     'Authorization' => 'Bearer ' . $tokenString,
-                    'X-GitHub-Api-Version' => '2022-11-28',
                 ]
             );
 
@@ -74,21 +73,11 @@ final class GitHub extends OAuth2 implements GitHubInterface
         return [];
     }
 
-    /**
-     * @return string service name.
-     *
-     * @psalm-return 'github'
-     */
     public function getName(): string
     {
         return 'github';
     }
 
-    /**
-     * @return string service title.
-     *
-     * @psalm-return 'GitHub'
-     */
     public function getTitle(): string
     {
         return 'GitHub';

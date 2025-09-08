@@ -8,6 +8,8 @@ use Psr\Http\Message\RequestInterface;
 use Yiisoft\Yii\AuthClient\OAuth2;
 use Yiisoft\Yii\AuthClient\OAuthToken;
 use Yiisoft\Yii\AuthClient\RequestUtil;
+use Psr\Http\Client\ClientInterface;
+use Psr\Http\Message\RequestFactoryInterface;
 
 /**
  * Yandex allows authentication via Yandex OAuth.
@@ -17,7 +19,7 @@ use Yiisoft\Yii\AuthClient\RequestUtil;
  * @link https://oauth.yandex.ru/client/new
  * @link https://api.yandex.ru/login/doc/dg/reference/response.xml
  */
-final class Yandex extends OAuth2 implements YandexInterface
+final class Yandex extends OAuth2
 {
     protected string $authUrl = 'https://oauth.yandex.com/authorize';
 
@@ -41,42 +43,33 @@ final class Yandex extends OAuth2 implements YandexInterface
         return RequestUtil::addParams($request, $paramsToAdd);
     }
 
-    public function getCurrentUserJsonArrayUsingCurl(OAuthToken $token): array
-    {
+    public function getCurrentUserJsonArray(
+        OAuthToken $oAuthToken,
+        ClientInterface $clientInterface,
+        RequestFactoryInterface $requestFactoryInterface
+    ): array {
         /**
          * @see https://yandex.com/dev/id/doc/en/codes/code-url
          */
-
         $url = 'https://login.yandex.ru/info';
 
-        $tokenString = (string)$token->getParam('access_token');
+        $tokenString = (string)$oAuthToken->getParam('access_token');
 
         if (strlen($tokenString) > 0) {
-            $headers = [
-                "Authorization: OAuth $tokenString",
-            ];
+            $request = $requestFactoryInterface
+                ->createRequest('GET', $url)
+                ->withHeader('Authorization', "OAuth $tokenString");
 
-            $ch = curl_init();
-
-            if ($ch != false) {
-                curl_setopt($ch, CURLOPT_URL, $url);
-
-                curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
-                $response = curl_exec($ch);
-
-                curl_close($ch);
-
-                if (is_string($response) && strlen($response) > 0) {
-                    return (array)json_decode($response, true);
+            try {
+                $response = $clientInterface->sendRequest($request);
+                $body = (string)$response->getBody();
+                if (strlen($body) > 0) {
+                    return (array)json_decode($body, true);
                 }
-
+                return [];
+            } catch (\Psr\Http\Client\ClientExceptionInterface $e) {
                 return [];
             }
-
-            return [];
         }
 
         return [];
@@ -95,21 +88,11 @@ final class Yandex extends OAuth2 implements YandexInterface
         return 'login:info';
     }
 
-    /**
-     * @return string service name.
-     *
-     * @psalm-return 'yandex'
-     */
     public function getName(): string
     {
         return 'yandex';
     }
 
-    /**
-     * @return string service title.
-     *
-     * @psalm-return 'Yandex'
-     */
     public function getTitle(): string
     {
         return 'Yandex';
