@@ -21,6 +21,7 @@ use Psr\Http\Message\ResponseInterface;
  */
 final class LinkedIn extends OAuth2
 {
+    protected string $version = 'v2';
     protected string $authUrl = 'https://www.linkedin.com/oauth/v2/authorization';
     protected string $tokenUrl = 'https://www.linkedin.com/oauth/v2/accessToken';
     protected string $endpoint = 'https://api.linkedin.com/v2';
@@ -39,11 +40,16 @@ final class LinkedIn extends OAuth2
         RequestFactoryInterface $requestFactory
     ): array {
         $tokenString = (string)$token->getParam('access_token');
-        if (strlen($tokenString) === 0) {
+        if ($tokenString !== '') {
             return [];
         }
 
-        $request = $requestFactory->createRequest('GET', 'https://api.linkedin.com/v2/userinfo')
+        $url = sprintf(
+            'https://api.linkedin.com/%s/userinfo',
+            $this->version
+        );
+
+        $request = $requestFactory->createRequest('GET', $url)
             ->withHeader('Authorization', 'Bearer ' . $tokenString);
 
         try {
@@ -53,21 +59,53 @@ final class LinkedIn extends OAuth2
             if (strlen($body) > 0) {
                 return (array)json_decode($body, true);
             }
-        } catch (\Throwable $e) {
+        } catch (\Throwable) {
             return [];
         }
 
         return [];
     }
-
+    
+    protected function initUserAttributes(): array
+    {
+        $token = $this->getAccessToken();
+        if ($token instanceof OAuthToken) {
+            // Use $this->httpClient and $this->requestFactory from the parent OAuth2 class
+            return $this->getCurrentUserJsonArray($token, $this->httpClient, $this->requestFactory);
+        }
+        return [];
+    }
+    
+    #[\Override]
     public function getName(): string
     {
         return 'linkedin';
     }
 
+    #[\Override]
     public function getTitle(): string
     {
         return 'LinkedIn';
+    }    
+    
+    #[\Override]
+    public function getButtonClass(): string
+    {
+        return 'btn btn-info bi bi-linkedin';
+    }  
+    
+    /**
+     * @return int[]
+     *
+     * @psalm-return array{popupWidth: 860, popupHeight: 480}
+     */
+    #[\Override]
+    protected function defaultViewOptions(): array
+    {
+        return [
+            'popupWidth' => 860,
+            'popupHeight' => 480,
+        ];
     }
 
     /**

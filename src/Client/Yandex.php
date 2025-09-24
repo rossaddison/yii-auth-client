@@ -18,6 +18,7 @@ use Psr\Http\Message\RequestFactoryInterface;
  *
  * @link https://oauth.yandex.ru/client/new
  * @link https://api.yandex.ru/login/doc/dg/reference/response.xml
+ * @link https://yandex.com/dev/id/doc/en/codes/code-url
  */
 final class Yandex extends OAuth2
 {
@@ -48,31 +49,56 @@ final class Yandex extends OAuth2
         ClientInterface $clientInterface,
         RequestFactoryInterface $requestFactoryInterface
     ): array {
-        /**
-         * @see https://yandex.com/dev/id/doc/en/codes/code-url
-         */
-        $url = 'https://login.yandex.ru/info';
-
         $tokenString = (string)$oAuthToken->getParam('access_token');
 
-        if (strlen($tokenString) > 0) {
+        if ($tokenString !== '') {
             $request = $requestFactoryInterface
-                ->createRequest('GET', $url)
+                ->createRequest('GET', $this->endpoint)
                 ->withHeader('Authorization', "OAuth $tokenString");
 
             try {
                 $response = $clientInterface->sendRequest($request);
                 $body = (string)$response->getBody();
-                if (strlen($body) > 0) {
-                    return (array)json_decode($body, true);
+                if (!empty($body)) {
+                    return (array) json_decode($body, true);
                 }
                 return [];
-            } catch (\Psr\Http\Client\ClientExceptionInterface $e) {
+            } catch (\Psr\Http\Client\ClientExceptionInterface) {
                 return [];
             }
         }
 
         return [];
+    }
+    
+    protected function initUserAttributes(): array
+    {
+        $token = $this->getAccessToken();
+        if ($token instanceof OAuthToken) {
+            // Use $this->httpClient and $this->requestFactory from the parent OAuth2 class
+            return $this->getCurrentUserJsonArray($token, $this->httpClient, $this->requestFactory);
+        }
+        return [];
+    }
+        
+    #[\Override]
+    public function getButtonClass(): string
+    {
+        return 'btn btn-dark bi';
+    } 
+    
+    /**
+     * @return int[]
+     *
+     * @psalm-return array{popupWidth: 860, popupHeight: 480}
+     */
+    #[\Override]
+    protected function defaultViewOptions(): array
+    {
+        return [
+            'popupWidth' => 860,
+            'popupHeight' => 480,
+        ];
     }
 
     /**
@@ -88,11 +114,13 @@ final class Yandex extends OAuth2
         return 'login:info';
     }
 
+    #[\Override]
     public function getName(): string
     {
         return 'yandex';
     }
 
+    #[\Override]
     public function getTitle(): string
     {
         return 'Yandex';

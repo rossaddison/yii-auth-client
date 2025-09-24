@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Yiisoft\Yii\AuthClient;
 
-use GuzzleHttp\Client as PsrClientInterface;
+use Psr\Http\Client\ClientInterface as PsrClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -76,7 +76,7 @@ abstract class AuthClient implements AuthClientInterface
 
         return $this->normalizeUserAttributeMap;
     }
-
+    
     /**
      * Returns the default {@see normalizeUserAttributeMap} value.
      * Particular client may override this method in order to provide specific default map.
@@ -93,6 +93,7 @@ abstract class AuthClient implements AuthClientInterface
     /**
      * @return array view options in format: optionName => optionValue
      */
+    #[\Override]
     public function getViewOptions(): array
     {
         if (empty($this->viewOptions)) {
@@ -118,6 +119,7 @@ abstract class AuthClient implements AuthClientInterface
         ];
     }
 
+    #[\Override]
     abstract public function buildAuthUrl(ServerRequestInterface $incomingRequest, array $params): string;
 
     public function createRequest(string $method, string $uri): RequestInterface

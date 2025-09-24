@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Yiisoft\Yii\AuthClient;
 
 use InvalidArgumentException;
+use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -48,13 +49,13 @@ abstract class OAuth2 extends OAuth
     /**
      * BaseOAuth constructor.
      *
-     * @param \GuzzleHttp\Client $httpClient
+     * @param ClientInterface $httpClient
      * @param RequestFactoryInterface $requestFactory
      * @param StateStorageInterface $stateStorage
      * @param YiisoftFactory $factory
      */
     public function __construct(
-        \GuzzleHttp\Client $httpClient,
+        ClientInterface $httpClient,
         RequestFactoryInterface $requestFactory,
         StateStorageInterface $stateStorage,
         protected YiisoftFactory $factory,
@@ -71,6 +72,7 @@ abstract class OAuth2 extends OAuth
      *
      * @return string authorization URL.
      */
+    #[\Override]
     public function buildAuthUrl(
         ServerRequestInterface $incomingRequest,
         array $params = []
@@ -188,93 +190,6 @@ abstract class OAuth2 extends OAuth
     }
 
     /**
-     * Fetches access token from authorization code using cURL.
-     *
-     * @param ServerRequestInterface $incomingRequest
-     * @param string $authCode authorization code, usually comes at GET parameter 'code'.
-     * @param array $params additional request params.
-     *
-     * @return OAuthToken access token.
-     */
-    public function fetchAccessTokenWithCurl(
-        ServerRequestInterface $incomingRequest,
-        string $authCode,
-        array $params = [],
-    ): OAuthToken {
-        if ($this->validateAuthState) {
-            /**
-             * @psalm-suppress MixedAssignment
-             */
-            $authState = $this->getState('authState');
-            $queryParams = $incomingRequest->getQueryParams();
-            $bodyParams = $incomingRequest->getParsedBody();
-            /**
-             * @psalm-suppress MixedAssignment
-             */
-            $incomingState = $queryParams['state'] ?? ($bodyParams['state'] ?? null);
-            if (is_string($incomingState)) {
-                if (strcmp($incomingState, (string)$authState) !== 0) {
-                    throw new InvalidArgumentException('Invalid auth state parameter.');
-                }
-            }
-            if ($incomingState === null) {
-                throw new InvalidArgumentException('Invalid auth state parameter.');
-            }
-            if (empty($authState)) {
-                throw new InvalidArgumentException('Invalid auth state parameter.');
-            }
-            $this->removeState('authState');
-        }
-
-        $requestBody = [
-            'grant_type' => 'authorization_code',
-            'client_id' => $this->clientId,
-            'client_secret' => $this->clientSecret,
-            'code' => $authCode,
-            'redirect_uri' => $params['redirect_uri'] ?? '',
-        ];
-
-        // Convert the request body to a URL-encoded query string
-        $requestBodyString = http_build_query($requestBody);
-
-        // Create a POST request with the request body
-        $curl = curl_init($this->tokenUrl);
-
-        if ($curl != false) {
-            curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($curl, CURLOPT_POST, true);
-            curl_setopt($curl, CURLOPT_POSTFIELDS, $requestBodyString);
-            curl_setopt($curl, CURLOPT_HTTPHEADER, [
-                'Content-Type: application/x-www-form-urlencoded',
-            ]);
-
-            $response = curl_exec($curl);
-            curl_close($curl);
-
-            // Handle the response
-            if (is_string($response) && (strlen($response) > 0)) {
-                $output = (array)json_decode($response, true);
-            } else {
-                $output = [];
-            }
-        } else {
-            $output = [];
-        }
-
-        $token = new OAuthToken();
-
-        /**
-         * @var string $key
-         * @var string $value
-         */
-        foreach ($output as $key => $value) {
-            $token->setParam($key, $value);
-        }
-
-        return $token;
-    }
-
-    /**
      * Note: This function will be adapted later to accomodate the 'confidential client'.
      * @see https://docs.x.com/resources/fundamentals/authentication/oauth-2-0/authorization-code
      * Used specifically for the X i.e. Twitter OAuth2.0 Authorization code with PKCE and public client i.e.
@@ -286,7 +201,7 @@ abstract class OAuth2 extends OAuth
      * @throws InvalidArgumentException
      * @return OAuthToken
      */
-    public function fetchAccessTokenWithCurlAndCodeVerifier(
+    public function fetchAccessTokenWithCodeVerifier(
         ServerRequestInterface $incomingRequest,
         string $authCode,
         array $params = [],
@@ -298,12 +213,13 @@ abstract class OAuth2 extends OAuth
             $authState = $this->getState('authState');
 
             $queryParams = $incomingRequest->getQueryParams();
-
             $bodyParams = $incomingRequest->getParsedBody();
+
             /**
              * @psalm-suppress MixedAssignment
              */
             $incomingState = $queryParams['state'] ?? ($bodyParams['state'] ?? null);
+
             if (is_string($incomingState)) {
                 if (strcmp($incomingState, (string)$authState) !== 0) {
                     throw new InvalidArgumentException('Invalid auth state parameter.');
@@ -327,34 +243,25 @@ abstract class OAuth2 extends OAuth
             'code_verifier' => $params['code_verifier'] ?? '',
         ];
 
-        // Convert the request body to a URL-encoded query string
-        $requestBodyString = http_build_query($requestBody);
+        $request = $this->requestFactory
+            ->createRequest('POST', $this->tokenUrl)
+            ->withHeader('Content-Type', 'application/x-www-form-urlencoded');
 
-        // Create a POST request with the request body
-        $curl = curl_init($this->tokenUrl);
+        $request->getBody()->write(http_build_query($requestBody));
 
-        if ($curl != false) {
-            curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-
-            curl_setopt($curl, CURLOPT_POST, true);
-
-            curl_setopt($curl, CURLOPT_POSTFIELDS, $requestBodyString);
-
-            $response = curl_exec($curl);
-
-            curl_close($curl);
-
-            if (is_string($response) && strlen($response) > 0) {
-                $output = (array)json_decode($response, true);
+        try {
+            $response = $this->httpClient->sendRequest($request);
+            $body = $response->getBody()->getContents();
+            if (strlen($body) > 0) {
+                $output = (array) json_decode($body, true);
             } else {
                 $output = [];
             }
-        } else {
+        } catch (\Throwable) {
             $output = [];
         }
 
         $token = new OAuthToken();
-
         /**
          * @var string $key
          * @var string $value
@@ -403,6 +310,7 @@ abstract class OAuth2 extends OAuth
         $this->clientId = $clientId;
     }
 
+    #[\Override]
     public function getClientId(): string
     {
         return $this->clientId;
@@ -428,6 +336,7 @@ abstract class OAuth2 extends OAuth
         $this->returnUrl = $returnUrl;
     }
 
+    #[\Override]
     public function applyAccessTokenToRequest(RequestInterface $request, OAuthToken $accessToken): RequestInterface
     {
         return RequestUtil::addParams(
@@ -447,6 +356,7 @@ abstract class OAuth2 extends OAuth
      *
      * @return OAuthToken new auth token.
      */
+    #[\Override]
     public function refreshAccessToken(OAuthToken $token): OAuthToken
     {
         $params = [
@@ -480,6 +390,25 @@ abstract class OAuth2 extends OAuth
     public function getTokenUrl(): string
     {
         return $this->tokenUrl;
+    }
+    
+    public function setTokenUrl(string $tokenUrl): void
+    {
+        $this->tokenUrl = $tokenUrl;
+    }
+
+    public function withValidateAuthState(): self
+    {
+        $new = clone $this;
+        $new->validateAuthState = true;
+        return $new;
+    }
+
+    public function withoutValidateAuthState(): self
+    {
+        $new = clone $this;
+        $new->validateAuthState = false;
+        return $new;
     }
 
     /**

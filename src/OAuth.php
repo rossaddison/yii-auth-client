@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Yiisoft\Yii\AuthClient;
 
 use Exception;
+use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -56,13 +57,13 @@ abstract class OAuth extends AuthClient
     /**
      * BaseOAuth constructor.
      *
-     * @param \GuzzleHttp\Client $httpClient
+     * @param ClientInterface $httpClient
      * @param RequestFactoryInterface $requestFactory
      * @param StateStorageInterface $stateStorage
      * @param YiisoftFactory $factory
      */
     public function __construct(
-        \GuzzleHttp\Client $httpClient,
+        ClientInterface $httpClient,
         RequestFactoryInterface $requestFactory,
         StateStorageInterface $stateStorage,
         protected YiisoftFactory $factory
@@ -96,6 +97,14 @@ abstract class OAuth extends AuthClient
             $this->returnUrl = $this->defaultReturnUrl($request);
         }
         return $this->returnUrl;
+    }
+    
+    /**
+     * @param string $returnUrl return URL
+     */
+    public function setReturnUrl(string $returnUrl): void
+    {
+        $this->returnUrl = $returnUrl;
     }
 
     /**

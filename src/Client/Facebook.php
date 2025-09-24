@@ -13,8 +13,7 @@ use Yiisoft\Yii\AuthClient\RequestUtil;
 /**
  * Facebook allows authentication via Facebook OAuth.
  *
- * In order to use Facebook OAuth you must register your application at <https://developers.facebook.com/apps> or redirect to
- * https://business.facebook.com/business/loginpage/?next=https%3A%2F%2Fdevelopers.facebook.com%2Fapps
+ * In order to use Facebook OAuth you must register your application at <https://developers.facebook.com/apps>
  *
  * Example application configuration:
  *
@@ -33,13 +32,16 @@ use Yiisoft\Yii\AuthClient\RequestUtil;
  *   ],
  *
  * @link https://developers.facebook.com/apps
- * @link https://developers.facebook.com/docs/reference/api
+ * @link https://developers.facebook.com/docs/graph-api
  */
 final class Facebook extends OAuth2
 {
+    protected string $graphApiVersion = 'v23.0';
     protected string $authUrl = 'https://www.facebook.com/dialog/oauth';
     protected string $tokenUrl = 'https://graph.facebook.com/oauth/access_token';
     protected string $endpoint = 'https://graph.facebook.com';
+    /** @var string[] */
+    protected array $endpointFields = ['id', 'name', 'first_name', 'last_name'];
     protected bool $autoRefreshAccessToken = false; // Facebook does not provide access token refreshment
 
     /**
@@ -62,14 +64,7 @@ final class Facebook extends OAuth2
     {
         $params = $token->getParams();
         $finalValue = '';
-
-        /**
-         * @var string $key
-         * @var string $value
-         */
-        foreach ($params as $key => $value) {
-            $finalValue = $key;
-        }
+        $finalValue = array_key_last($params);
 
         /**
          * @var string $finalValue
@@ -78,8 +73,16 @@ final class Facebook extends OAuth2
         $array = json_decode($finalValue, true);
         $tokenString = (string)($array['access_token'] ?? '');
 
-        if (strlen($tokenString) > 0) {
-            $request = $this->createRequest('GET', 'https://graph.facebook.com/v21.0/me?fields=id,name,first_name,last_name');
+        if ($tokenString !== '') {
+            $queryParams = [
+                'fields' => implode(',', $this->endpointFields),
+            ];
+            $url = sprintf(
+                $this->endpoint . '/%s/me?%s',
+                urlencode($this->graphApiVersion),
+                http_build_query($queryParams)
+            );
+            $request = $this->createRequest('GET', $url);
             $request = RequestUtil::addHeaders(
                 $request,
                 [
@@ -87,8 +90,16 @@ final class Facebook extends OAuth2
                 ]
             );
             $response = $this->sendRequest($request);
-            $user = [];
-            return (array)json_decode($response->getBody()->getContents(), true);
+            return (array) json_decode($response->getBody()->getContents(), true);
+        }
+        return [];
+    }
+    
+    protected function initUserAttributes(): array
+    {
+        $token = $this->getAccessToken();
+        if ($token instanceof OAuthToken) {
+            return $this->getCurrentUserJsonArray($token);
         }
         return [];
     }
@@ -228,15 +239,23 @@ final class Facebook extends OAuth2
         return $token;
     }
 
+    #[\Override]
     public function getName(): string
     {
         return 'facebook';
     }
 
+    #[\Override]
     public function getTitle(): string
     {
         return 'Facebook';
-    }
+    }    
+    
+    #[\Override]
+    public function getButtonClass(): string
+    {
+        return 'btn btn-primary bi bi-facebook';
+    }    
 
     /**
      * @return int[]

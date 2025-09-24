@@ -15,21 +15,19 @@ use Yiisoft\Yii\AuthClient\RequestUtil;
  *
  * Example application configuration:
  *
- * ```php
- * 'components' => [
- *     'authClientCollection' => [
- *         'class' => Yiisoft\Yii\AuthClient\Collection::class,
- *         'clients' => [
- *             'github' => [
- *                 'class' => Yiisoft\Yii\AuthClient\Clients\GitHub::class,
- *                 'clientId' => 'github_client_id',
- *                 'clientSecret' => 'github_client_secret',
- *             ],
- *         ],
- *     ]
- *     // ...
- * ]
- * ```
+ * config/common/params.php
+ *
+ * 'yiisoft/yii-auth-client' => [
+ *       'enabled' => true,
+ *       'clients' => [
+ *           'github' => [
+ *               'class' => 'Yiisoft\Yii\AuthClient\Client\Github::class',
+ *               'clientId' => $_ENV['GITHUB_API_CLIENT_ID'] ?? '',
+ *               'clientSecret' => $_ENV['GITHUB_API_CLIENT_SECRET'] ?? '',
+ *               'returnUrl' => $_ENV['GITHUB_API_CLIENT_RETURN_URL'] ?? '',
+ *           ],
+ *       ],
+ *   ],
  *
  * @link https://developer.github.com/v3/oauth/
  * @link https://github.com/settings/applications/new
@@ -53,7 +51,7 @@ final class GitHub extends OAuth2
         // Here is the actual 'access-token' which the user has allowed us to access their basic info.
         $tokenString = (string)$token->getParam('access_token');
 
-        if (strlen($tokenString) > 0) {
+        if ($tokenString !== '') {
             $request = $this->createRequest('GET', 'https://api.github.com/user');
 
             $request = RequestUtil::addHeaders(
@@ -72,15 +70,46 @@ final class GitHub extends OAuth2
 
         return [];
     }
+    
+    protected function initUserAttributes(): array
+    {
+        $token = $this->getAccessToken();
+        if ($token instanceof OAuthToken) {
+            return $this->getCurrentUserJsonArray($token);
+        }
+        return [];
+    }
 
+    #[\Override]
     public function getName(): string
     {
         return 'github';
     }
 
+    #[\Override]
     public function getTitle(): string
     {
         return 'GitHub';
+    }
+        
+    #[\Override]
+    public function getButtonClass(): string
+    {
+        return 'btn btn-primary bi bi-github';
+    }    
+    
+    /**
+     * @return int[]
+     *
+     * @psalm-return array{popupWidth: 860, popupHeight: 480}
+     */
+    #[\Override]
+    protected function defaultViewOptions(): array
+    {
+        return [
+            'popupWidth' => 860,
+            'popupHeight' => 480,
+        ];
     }
 
     /**
