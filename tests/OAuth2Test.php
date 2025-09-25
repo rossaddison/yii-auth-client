@@ -43,7 +43,7 @@ class OAuth2Test extends TestCase
             ->onlyMethods(['getName', 'getTitle', 'getViewOptions', 'getButtonClass', 'getClientId'])
             ->getMock();
     }
-    
+
     // Tests :
 
     public function testBuildAuthUrl(): void
