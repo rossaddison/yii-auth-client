@@ -21,11 +21,11 @@ class CollectionTest extends TestCase
     {
         return new Psr17Factory();
     }
-    
+
     private function getYiisoftFactory(): YiisoftFactory
     {
         return new YiisoftFactory();
-    }    
+    }
 
     private function getStateStorage(): StateStorageInterface
     {
@@ -36,11 +36,11 @@ class CollectionTest extends TestCase
     {
         $httpClient = $this->getMockBuilder(ClientInterface::class)->getMock();
         return new TestClient(
-            $httpClient, 
-            $this->getRequestFactory(), 
+            $httpClient,
+            $this->getRequestFactory(),
             $this->getStateStorage(),
             $this->getYiisoftFactory(),
-            new Session(),    
+            new Session(),
         );
     }
 

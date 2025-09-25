@@ -76,7 +76,7 @@ abstract class AuthClient implements AuthClientInterface
 
         return $this->normalizeUserAttributeMap;
     }
-    
+
     /**
      * Returns the default {@see normalizeUserAttributeMap} value.
      * Particular client may override this method in order to provide specific default map.

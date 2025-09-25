@@ -32,8 +32,8 @@ final class TestClient extends OAuth2
     public function getTitle(): string
     {
         return 'Test';
-    }  
-    
+    }
+
     #[\Override]
     public function getButtonClass(): string
     {
@@ -44,8 +44,8 @@ final class TestClient extends OAuth2
     public function getClientId(): string
     {
         return 'adfadfasdfasdfasdfasdfasdfasdfa';
-    }    
-    
+    }
+
     #[\Override]
     public function buildAuthUrl(ServerRequestInterface $incomingRequest, array $params = []): string
     {
