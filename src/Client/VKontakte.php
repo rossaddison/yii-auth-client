@@ -30,7 +30,7 @@ final class VKontakte extends OAuth2
     protected string $tokenUrl = 'https://id.vk.ru/oauth2/auth';
 
     protected string $endpoint = 'https://id.vk.ru/oauth2/user_info';
-    
+
     /**
      * Example answer: [
      *      'access_token' => 'XXXXX',
