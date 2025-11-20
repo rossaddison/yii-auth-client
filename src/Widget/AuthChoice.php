@@ -213,7 +213,7 @@ final class AuthChoice extends Widget
      * Outputs client auth link.
      *
      * @param OAuth2 $client extending from an auth client instance.
-     * @param string $text link text, if not set - default value will be generated.
+     * @param string|null $text link text, if not set - default value will be generated.
      * @param array $htmlOptions link HTML options.
      *
      * @throws InvalidConfigException on wrong configuration.
@@ -221,7 +221,7 @@ final class AuthChoice extends Widget
      *
      * @return string generated HTML.
      */
-    public function clientLink(OAuth2 $client, string $text = null, array $htmlOptions = []): string
+    public function clientLink(OAuth2 $client, ?string $text = null, array $htmlOptions = []): string
     {
         $viewOptions = $client->getViewOptions();
 
