@@ -50,6 +50,7 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
           ini-values: date.timezone='UTC'
+          extensions: sodium, mbstring, intl
           coverage: pcov
           tools: composer:v2
 
