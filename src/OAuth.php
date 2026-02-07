@@ -286,11 +286,11 @@ abstract class OAuth extends AuthClient
     /**
      * Saves token as persistent state.
      *
-     * @param OAuthToken|null $token auth token to be saved.
+     * @param OAuthToken $token auth token to be saved.
      *
      * @return $this the object itself.
      */
-    protected function saveAccessToken(OAuthToken $token = null): self
+    protected function saveAccessToken(OAuthToken $token): self
     {
         return $this->setState('token', $token);
     }

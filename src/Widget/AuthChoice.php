@@ -170,7 +170,7 @@ final class AuthChoice extends Widget
          * @var OAuth2 $externalService
          */
         foreach ($this->getClients() as $externalService) {
-            $items[] = Html::tag('li', $this->clientLink($externalService));
+            $items[] = Html::tag('li', $this->clientLink($externalService, '', []));
         }
 
         return Html::tag('ul', implode('', $items), ['class' => 'auth-clients'])->render();
@@ -221,12 +221,12 @@ final class AuthChoice extends Widget
      *
      * @return string generated HTML.
      */
-    public function clientLink(OAuth2 $client, string $text = null, array $htmlOptions = []): string
+    public function clientLink(OAuth2 $client, string $text, array $htmlOptions = []): string
     {
         $viewOptions = $client->getViewOptions();
 
         if (empty($viewOptions['widget'])) {
-            if ($text === null) {
+            if (strlen($text) === 0) {
                 $text = Html::tag('span', '', ['class' => 'auth-icon ' . $client->getName()])->render();
             }
             if (!isset($htmlOptions['class'])) {
