@@ -31,6 +31,7 @@
         "php": "8.3 - 8.5",
         "ext-openssl": "*",
         "ext-sodium": "*",
+        "azjezz/psl": "4.2.1",
         "phpseclib/phpseclib": ">=3.0.49",
         "psr/container": "^2.0.2",
         "psr/http-client": "^1.0.3",
