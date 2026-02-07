@@ -168,17 +168,17 @@ final class Facebook extends OAuth2
      * @see fetchClientAccessToken()
      *
      * @param ServerRequestInterface $incomingRequest
-     * @param OAuthToken|null $token access token, if not set {@see accessToken} will be used.
+     * @param OAuthToken $token access token, if not set {@see accessToken} will be used.
      * @param array $params additional request params.
      *
      * @return numeric-string client auth code.
      */
     public function fetchClientAuthCode(
         ServerRequestInterface $incomingRequest,
-        OAuthToken $token = null,
+        OAuthToken $token,
         array $params = []
     ): string {
-        if ($token === null) {
+        if (strlen($token) === 0) {
             $token = $this->getAccessToken();
         }
         if (null !== $token) {
