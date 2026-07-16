@@ -10,7 +10,6 @@ use Yiisoft\Html\Html;
 use Yiisoft\Html\Tag\A;
 use Yiisoft\Json\Json;
 use Yiisoft\Router\UrlGeneratorInterface;
-use Yiisoft\View\WebView;
 use Yiisoft\Widget\Widget;
 use Yiisoft\Yii\AuthClient\Asset\AuthChoiceAsset;
 use Yiisoft\Yii\AuthClient\Asset\AuthChoiceStyleAsset;
@@ -96,7 +95,6 @@ final class AuthChoice extends Widget
     public function __construct(
         Collection $clientCollection,
         private readonly UrlGeneratorInterface $urlGenerator,
-        private readonly WebView $webView,
         private readonly AssetManager $assetManager,
     ) {
         $this->clients = $clientCollection->getClients();
@@ -111,18 +109,13 @@ final class AuthChoice extends Widget
         if ($this->popupMode) {
             $this->assetManager->register(AuthChoiceAsset::class);
 
-            if (empty($this->clientOptions)) {
-                $options = '';
-            } else {
-                $options = Json::htmlEncode($this->clientOptions);
-            }
-
-            $this->webView->registerJs("
-                const el = document.getElementById('" . $this->getId() . "');
-                if (el && typeof authchoice === 'function') {
-                    authchoice(el, {$options});
-                }
-            ");
+            // Auto-initialized by authchoice.js on DOMContentLoaded (matches
+            // elements carrying this attribute) instead of a registerJs()
+            // inline <script>, so this widget works under a CSP with no
+            // 'unsafe-inline'/'unsafe-eval' in script-src.
+            $this->options['data-authchoice'] = empty($this->clientOptions)
+                ? ''
+                : Json::encode($this->clientOptions);
         } else {
             $this->assetManager->register(AuthChoiceStyleAsset::class);
         }
@@ -313,13 +306,14 @@ final class AuthChoice extends Widget
         foreach ($this->getClients() as $client) {
             if ($name === $client->getName()) {
                 if (strlen($client->getClientId()) > 0) {
-                    $viewOptions = $client->getViewOptions();
-                    $height = (string) $viewOptions['popupHeight'];
-                    $width = (string) $viewOptions['popupWidth'];
                     $this->authRoute($authRoute);
+                    // No inline onclick: clientLink() already puts this in
+                    // popup mode, so the delegated click listener registered
+                    // by authchoice.js (see init()'s data-authchoice
+                    // attribute) opens the popup using this link's
+                    // data-popup-width/data-popup-height attributes.
                     return $this->clientLink($client, ' ' . ucfirst((string) $provider['buttonName']), [
-                        'onclick' => "window.open(this.href, 'authPopup', 'width=" . $width . ',height=' . $height . "'); return false;",
-                        'class' => $client->getButtonClass() ,
+                        'class' => $client->getButtonClass(),
                     ]);
                 }
             }

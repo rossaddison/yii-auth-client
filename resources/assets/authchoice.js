@@ -1,3 +1,20 @@
+// Shallow-merges own enumerable properties of source over target into a new object.
+function extend(target, source) {
+    var result = {};
+    var key;
+    for (key in target) {
+        if (Object.prototype.hasOwnProperty.call(target, key)) {
+            result[key] = target[key];
+        }
+    }
+    for (key in source) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+            result[key] = source[key];
+        }
+    }
+    return result;
+}
+
 // Main function to initialize the authchoice widget
 function authchoice(container, options) {
     var defaults = {
@@ -65,10 +82,22 @@ function authchoice(container, options) {
 // Attach to window for usage
 window.authchoice = authchoice;
 
-// Auto-init for DOM elements with [data-authchoice] attribute
+// Auto-init for DOM elements with a [data-authchoice] attribute; a non-empty
+// value is parsed as the JSON options object (see AuthChoice::init(), which
+// sets this attribute instead of registering an inline <script> so the
+// widget works under a CSP with no 'unsafe-inline'/'unsafe-eval').
 document.addEventListener('DOMContentLoaded', function() {
     var containers = document.querySelectorAll('[data-authchoice]');
     containers.forEach(function(container) {
-        window.authchoice(container);
+        var options = {};
+        var raw = container.getAttribute('data-authchoice');
+        if (raw) {
+            try {
+                options = JSON.parse(raw);
+            } catch (e) {
+                options = {};
+            }
+        }
+        window.authchoice(container, options);
     });
 });
