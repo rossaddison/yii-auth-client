@@ -177,7 +177,7 @@ abstract class OAuth2 extends OAuth
         $request = $this->applyClientCredentialsToRequest($request);
         $response = $this->sendRequest($request);
         $contents = $response->getBody()->getContents();
-        $output = $this->parse_str_clean($contents);
+        $output = $this->parseStrClean($contents);
         $token = new OAuthToken();
         /**
          * @var string $key
@@ -374,7 +374,7 @@ abstract class OAuth2 extends OAuth
 
         $contents = $response->getBody()->getContents();
 
-        $output = $this->parse_str_clean($contents);
+        $output = $this->parseStrClean($contents);
 
         $token = new OAuthToken();
         /**
@@ -431,7 +431,7 @@ abstract class OAuth2 extends OAuth
      * Purpose: Prevent, inter alia, underscores in keys of an array
      * @see https://www.php.net/manual/en/function.parse-str.php#126789
      */
-    private function parse_str_clean(string $querystr): array
+    private function parseStrClean(string $querystr): array
     {
         $qquerystr = str_ireplace(['.','%2E','+',' ','%20'], ['QQleQPunT', 'QQleQPunT', 'QQleQSpaTIE', 'QQleQSpaTIE', 'QQleQSpaTIE'], $querystr);
         $arr = null;

@@ -100,12 +100,8 @@ final class OAuthToken
     protected function defaultExpireDurationParamKey(): string
     {
         $expireDurationParamKey = 'expires_in';
-        /**
-         * @var mixed $value
-         */
-        foreach ($this->getParams() as $name => $value) {
-            if (!str_contains((string)$name, 'expir')) {
-            } else {
+        foreach (array_keys($this->getParams()) as $name) {
+            if (str_contains((string)$name, 'expir')) {
                 $expireDurationParamKey = (string)$name;
                 break;
             }

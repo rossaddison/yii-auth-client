@@ -48,6 +48,7 @@ final class RsaSha extends Signature
         if (!function_exists('openssl_sign')) {
             throw new NotSupportedException('PHP "OpenSSL" extension is required.');
         }
+        $this->algorithm = $algorithm;
     }
 
     /**

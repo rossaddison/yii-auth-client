@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Yiisoft\Yii\AuthClient\Factory;
 
+use InvalidArgumentException;
 use Psr\Container\ContainerInterface;
 use Yiisoft\Yii\AuthClient\Collection;
 
@@ -27,7 +28,7 @@ class CollectionFactory
          */
         foreach ($this->clients as $name => $client) {
             if (!is_string($name)) {
-                throw new \InvalidArgumentException('Client name must be set.');
+                throw new InvalidArgumentException('Client name must be set.');
             }
             $clients[$name] = $container->get($client);
         }
