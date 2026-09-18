@@ -47,6 +47,18 @@ abstract class OAuth2 extends OAuth
     protected bool $validateAuthState = true;
 
     /**
+     * @var bool whether the token endpoint returns a JSON body (e.g.
+     * QuickBooks/Intuit) rather than the `application/x-www-form-urlencoded`
+     * body every other provider in this fork was written against.
+     * fetchAccessToken()/refreshAccessToken() both parse via
+     * {@see parseTokenResponse()}, which branches on this flag -- default
+     * false preserves every existing subclass's current (form-encoded)
+     * behaviour unchanged. Set true in a subclass constructor for a
+     * JSON-only provider instead of overriding either method wholesale.
+     */
+    protected bool $jsonTokenResponse = false;
+
+    /**
      * BaseOAuth constructor.
      *
      * @param ClientInterface $httpClient
@@ -177,7 +189,7 @@ abstract class OAuth2 extends OAuth
         $request = $this->applyClientCredentialsToRequest($request);
         $response = $this->sendRequest($request);
         $contents = $response->getBody()->getContents();
-        $output = $this->parseStrClean($contents);
+        $output = $this->parseTokenResponse($contents);
         $token = new OAuthToken();
         /**
          * @var string $key
@@ -374,7 +386,7 @@ abstract class OAuth2 extends OAuth
 
         $contents = $response->getBody()->getContents();
 
-        $output = $this->parseStrClean($contents);
+        $output = $this->parseTokenResponse($contents);
 
         $token = new OAuthToken();
         /**
@@ -425,6 +437,31 @@ abstract class OAuth2 extends OAuth
         unset($params['code'], $params['state']);
 
         return (string)$request->getUri()->withQuery(http_build_query($params, '', '&', PHP_QUERY_RFC3986));
+    }
+
+    /**
+     * Parses a token endpoint's raw response body into a plain key-value
+     * array, branching on {@see $jsonTokenResponse} -- JSON for providers
+     * like QuickBooks/Intuit, otherwise every existing provider's
+     * unchanged `application/x-www-form-urlencoded` parsing via
+     * {@see parseStrClean()}.
+     *
+     * @return array<string, mixed>
+     */
+    protected function parseTokenResponse(string $contents): array
+    {
+        if (!$this->jsonTokenResponse) {
+            return $this->parseStrClean($contents);
+        }
+
+        if ($contents === '') {
+            return [];
+        }
+
+        /** @var mixed $decoded */
+        $decoded = json_decode($contents, true);
+
+        return is_array($decoded) ? $decoded : [];
     }
 
     /**
