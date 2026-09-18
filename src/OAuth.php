@@ -308,9 +308,15 @@ abstract class OAuth extends AuthClient
     }
 
     /**
-     * @return string
+     * Default scope when none has been explicitly set via {@see setScope()}
+     * -- an empty string here, but subclasses are expected to override
+     * this with their own provider-specific scope literal (e.g. GitHub's
+     * 'user'), so this base declaration must not narrow the return type
+     * to the literal '' via @psalm-return -- that would make every
+     * legitimate subclass override a Psalm error instead of a widening,
+     * compatible one.
      *
-     * @psalm-return ''
+     * @return string
      */
     protected function getDefaultScope(): string
     {
