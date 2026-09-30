@@ -67,7 +67,7 @@ final class TikTok extends OAuth2
     ): OAuthToken {
         $this->validateIncomingAuthState($incomingRequest);
 
-        /** @var array<string, string|int|float|bool|null> $requestBody */
+        /** @var array<string, bool|float|int|string|null> $requestBody */
         $requestBody = array_merge(
             [
                 'client_key' => $this->clientId,
@@ -116,7 +116,7 @@ final class TikTok extends OAuth2
             $response = $httpClient->sendRequest($request);
             $body = $response->getBody()->getContents();
             if ($body !== '') {
-                /** @var array<array-key, mixed>|string|int|float|bool|null $decoded */
+                /** @var array<array-key, mixed>|bool|float|int|string|null $decoded */
                 $decoded = json_decode($body, true);
 
                 if (is_array($decoded)) {
@@ -183,7 +183,7 @@ final class TikTok extends OAuth2
     }
 
     /**
-     * @param array<string, string|int|float|bool|null> $params
+     * @param array<string, bool|float|int|string|null> $params
      */
     private function sendTokenRequest(array $params): OAuthToken
     {
@@ -202,7 +202,7 @@ final class TikTok extends OAuth2
                 return $token;
             }
 
-            /** @var array<array-key, mixed>|string|int|float|bool|null $value */
+            /** @var array<array-key, mixed>|bool|float|int|string|null $value */
             foreach ($decoded as $key => $value) {
                 if (is_string($key)) {
                     $token->setParam($key, $value);
@@ -240,11 +240,11 @@ final class TikTok extends OAuth2
 
     private function normalizeUserInfoResponse(array $response): array
     {
-        /** @var array<array-key, mixed>|string|int|float|bool|null $data */
+        /** @var array<array-key, mixed>|bool|float|int|string|null $data */
         $data = $response['data'] ?? null;
         $array = is_array($data) ? $data : [];
 
-        /** @var array<array-key, mixed>|string|int|float|bool|null $user */
+        /** @var array<array-key, mixed>|bool|float|int|string|null $user */
         $user = $array['user'] ?? null;
 
         return is_array($user) ? $user : $response;
