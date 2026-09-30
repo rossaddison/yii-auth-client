@@ -137,7 +137,7 @@ class Session implements SessionInterface
             'domain' => 'www.example.com',
             'secure' => true,
             'httponly' => false,
-            'samesite' => 'Lax'
+            'samesite' => 'Lax',
         ];
     }
 
