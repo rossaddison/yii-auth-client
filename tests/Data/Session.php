@@ -118,10 +118,27 @@ class Session implements SessionInterface
         // blank, preventing session destroy
     }
 
+    /**
+     * @psalm-type CookieParameters = array{
+     *     lifetime: int,
+     *     path: string,
+     *     domain: string,
+     *     secure: bool,
+     *     httponly: bool,
+     *     samesite: string
+     * }
+     */
     #[\Override]
     public function getCookieParameters(): array
     {
-        return [];
+        return [
+            'lifetime' => 1,
+            'path' => '',
+            'domain' => 'www.example.com',
+            'secure' => true,
+            'httponly' => false,
+            'samesite' => 'Lax'
+        ];
     }
 
     #[\Override]

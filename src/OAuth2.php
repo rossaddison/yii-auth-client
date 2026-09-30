@@ -446,7 +446,7 @@ abstract class OAuth2 extends OAuth
      * unchanged `application/x-www-form-urlencoded` parsing via
      * {@see parseStrClean()}.
      *
-     * @return array<string, mixed>
+     * @return array<array-key, mixed>
      */
     protected function parseTokenResponse(string $contents): array
     {
